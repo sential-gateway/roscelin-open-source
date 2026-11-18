@@ -1,0 +1,23 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {Broker} from '../packages/broker/src/broker.ts';
+import {MemKV} from './helpers.ts';
+import {makeBrowserAdapter,BROWSER_CAP} from '../packages/adapters/src/vikunja/browser.ts';
+import {buildState} from '../packages/adapters/src/vikunja/ops.ts';
+function setup(){
+ let done=false,revision=1,stopped=false,pageOk=true,clicks=0,throwAfter=false;
+ const read=async()=>buildState({origin:'http://localhost:3456',accountId:1,project:{id:2,title:'Synthetic'},tasks:[{id:1,title:'Synthetic task',project_id:2,done,priority:0,updated:String(revision)}],observedAt:1});
+ let session:any;const kv=new MemKV();
+ const adapter=makeBrowserAdapter({syntheticTestDispatch:true,read,session:async()=>session,save:async s=>{session=structuredClone(s);},checkPage:async()=>{if(!pageOk)throw Error('Tab or document changed');},checkTask:async()=>{},stopped:async()=>stopped,now:()=>Date.now(),click:async()=>{clicks++;done=true;revision++;if(throwAfter)throw Error('Response lost');}});
+ const broker=new Broker({kv,adapters:[adapter],hasPermission:async()=>true,isPaused:async()=>false,now:()=>Date.now(),randomId:()=>crypto.randomUUID()});
+ return {broker,adapter,kv,get clicks(){return clicks;},set stopped(v:boolean){stopped=v;},set pageOk(v:boolean){pageOk=v;},set throwAfter(v:boolean){throwAfter=v;},change:()=>revision++,async request(){const s=await read();const req:any={actionId:crypto.randomUUID(),capabilityId:BROWSER_CAP.id,target:{appId:'vikunja',origin:s.origin,documentInstanceId:s.documentInstanceId,objectId:'1',display:{app:'Vikunja',document:'Synthetic',object:'Synthetic task'}},expectedRevision:s.collections.tasks[0].revision,args:{session:'synthetic-session'},approvalToken:null,createdAt:Date.now(),expiresAt:Date.now()+60000};session={id:'synthetic-session',tabId:1,documentId:'document-1',url:s.origin+'/tasks/1',target:req.target,revision:req.expectedRevision,title:'Synthetic task',expiresAt:req.expiresAt,used:false};return req;}};
+}
+test('browser complete requires approval; approved single click gets independent readback',async()=>{const x=setup(),r=await x.request();assert.equal((await x.broker.execute(r)).errorCode,'APPROVAL_REQUIRED');assert.equal(x.clicks,0);const a=await x.broker.issueApproval(r);assert.equal((await x.broker.execute({...r,approvalToken:a.token})).status,'verified');assert.equal(x.clicks,1);assert.equal((await x.broker.execute(r)).errorCode,'DUPLICATE_ACTION');});
+test('changed tab/document prevents browser click',async()=>{const x=setup(),r=await x.request();const a=await x.broker.issueApproval(r);x.pageOk=false;assert.equal((await x.broker.execute({...r,approvalToken:a.token})).status,'failed');assert.equal(x.clicks,0);});
+test('Stop after approval prevents browser click',async()=>{const x=setup(),r=await x.request();const a=await x.broker.issueApproval(r);x.stopped=true;assert.equal((await x.broker.execute({...r,approvalToken:a.token})).status,'failed');assert.equal(x.clicks,0);});
+test('changed task revision refuses browser click',async()=>{const x=setup(),r=await x.request();const a=await x.broker.issueApproval(r);x.change();assert.equal((await x.broker.execute({...r,approvalToken:a.token})).errorCode,'STALE_REVISION');assert.equal(x.clicks,0);});
+test('effect then thrown error is reconciled by state without replaying click',async()=>{const x=setup(),r=await x.request();const a=await x.broker.issueApproval(r);x.throwAfter=true;assert.equal((await x.broker.execute({...r,approvalToken:a.token})).status,'verified');await x.broker.reconcile();assert.equal(x.clicks,1);});
+test('material browser session substitution invalidates approval',async()=>{const x=setup(),r=await x.request();const a=await x.broker.issueApproval(r);assert.equal((await x.broker.execute({...r,args:{session:'other'},approvalToken:a.token})).errorCode,'APPROVAL_INVALID');assert.equal(x.clicks,0);});
+
+test('production browser adapter refuses dispatch without synthetic fake-port opt-in',async()=>{const a=makeBrowserAdapter({} as any);const result=await a.execute({} as any);assert.equal(result.dispatched,false);assert.match(result.detail,/disabled/);});
+test('browser verifier rejects collateral priority and title changes',async()=>{const x=setup(),r=await x.request();const before=await x.adapter.readState(r.target);const op=x.adapter.ops[0];const ctx=op.prepare!(before,r);for(const field of ['title','priority']){const after=structuredClone(before);after.collections.tasks[0].fields.status='done';after.collections.tasks[0].revision++;after.collections.tasks[0].fields[field]='changed';assert.equal(op.verify(after,r,ctx).verified,false);}assert.equal(op.verify(before,r,undefined).verified,false);});

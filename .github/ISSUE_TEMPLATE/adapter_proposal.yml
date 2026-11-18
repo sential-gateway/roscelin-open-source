@@ -1,0 +1,38 @@
+name: Adapter proposal
+description: Propose an adapter for a new app.
+labels: ["adapter", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Agree the approach here before writing the adapter.
+  - type: input
+    id: app
+    attributes:
+      label: App and version
+    validations:
+      required: true
+  - type: input
+    id: app-licence
+    attributes:
+      label: App licence, and whether it can be run locally for tests
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Capabilities
+      description: The reads and writes the adapter would declare, and the API it would use.
+    validations:
+      required: true
+  - type: textarea
+    id: fields
+    attributes:
+      label: Fields and roles
+      description: The proposed collectionSchema fields, and which map to title, status, priority and other roles.
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety
+      description: How the adapter detects stale data, reads back after a write, and authenticates. Which permissions it needs.
+    validations:
+      required: true

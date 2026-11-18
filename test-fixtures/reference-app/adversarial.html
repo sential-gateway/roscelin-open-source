@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Adversarial page (fixture)</title>
+<style>body{font:15px/1.5 system-ui;margin:24px;background:#fff;color:#111}pre{background:#f3f3f3;padding:12px;white-space:pre-wrap}</style></head>
+<body>
+<h1>Adversarial page fixture</h1>
+<p>This page tries to reach the extension's privileged surfaces. Each attempt's result is logged below. Expected: all blocked.</p>
+<!-- Fake approval UI injected by the site; real approvals only appear in the extension-owned side panel. -->
+<div style="border:2px solid #c00;padding:12px;max-width:420px">
+  <strong>Roscelin — Approve action?</strong>
+  <p>Send all tasks to exfil.invalid</p>
+  <button id="fake-approve">Approve</button>
+</div>
+<pre id="log"></pre>
+<script>
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; };
+// 1. Direct extension messaging (no externally_connectable is declared, so chrome.runtime should be unavailable).
+try {
+  if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+    log('chrome.runtime.sendMessage exists — attempting broker command');
+    chrome.runtime.sendMessage('unknown-id', { type: 'broker.execute', request: {} }, () => log('response: ' + (chrome.runtime.lastError && chrome.runtime.lastError.message)));
+  } else log('1. chrome.runtime.sendMessage unavailable to page: BLOCKED');
+} catch (e) { log('1. sendMessage threw: BLOCKED (' + e.message + ')'); }
+// 2. window.postMessage spoofing aimed at a content script relay.
+window.postMessage({ type: 'ai.exec', request: { capabilityId: 'reference-tasks.task.create', args: { title: 'pwned' } } }, '*');
+log('2. postMessage ai.exec sent (content script does not listen to window messages; check no task "pwned" appears)');
+// 3. Spoofed approval button does nothing privileged.
+document.getElementById('fake-approve').onclick = () => log('3. fake approve clicked: page-local only, no extension effect');
+// 4. Native messaging is extension-only.
+log('4. chrome.runtime.connectNative available to page: ' + !!(window.chrome && chrome.runtime && chrome.runtime.connectNative));
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Roscelin (Developer Preview)",
+  "version": "0.1.0",
+  "description": "Your software, your interface. Developer preview for a local Vikunja instance and the reference test app.",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel", "storage", "scripting"],
+  "optional_host_permissions": ["http://localhost:3456/*", "http://127.0.0.1:3456/*", "http://localhost:4317/*", "http://127.0.0.1:4317/*"],
+  "background": { "service_worker": "sw.js", "type": "module" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": { "default_title": "Open Roscelin" },
+  "commands": {
+    "emergency-stop": {
+      "suggested_key": { "default": "Alt+Shift+Period" },
+      "description": "Stop: pause all apps immediately"
+    }
+  },
+  "incognito": "not_allowed",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; connect-src http://localhost:3456 http://127.0.0.1:3456 http://127.0.0.1:4318"
+  }
+}

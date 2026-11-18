@@ -1,0 +1,54 @@
+name: Bug report
+description: Something doesn't work as described.
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Don't report security problems here. Use the private route in SECURITY.md.
+        Use synthetic data only. Don't paste real personal data, API keys, tokens or passwords.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run ...
+        2. Choose ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Validator or UI schema
+        - Renderer components
+        - Adapter
+        - Planner or Refine
+        - Accessibility
+        - Build or tests
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, operating system and Node.js version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove anything private before pasting.

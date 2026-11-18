@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roscelin</title>
+<link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+<a class="skip-link" href="#surface">Skip to adapted workspace</a>
+<header class="shell-head">
+  <div>
+    <h1>Roscelin</h1>
+    <p class="ai-meta">Development build, local apps only</p>
+  </div>
+  <div class="ai-row">
+    <button id="to-sidepanel" type="button" hidden title="Move this workspace into Chrome's side panel">Open in side panel</button>
+    <button id="stop" class="danger" type="button" title="Pause all apps (Alt+Shift+.)">Stop</button>
+  </div>
+</header>
+
+<div id="stopped" class="notice warn" hidden role="alert">
+  Stopped. No actions will run. <button id="resume" type="button">Resume</button>
+</div>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-workspace" aria-selected="true" aria-controls="panel-workspace">Workspace</button>
+  <button role="tab" id="tab-settings" tabindex="-1" aria-selected="false" aria-controls="panel-settings">Profile</button>
+  <button role="tab" id="tab-activity" tabindex="-1" aria-selected="false" aria-controls="panel-activity">Activity</button>
+</nav>
+
+<main>
+  <section id="panel-workspace" role="tabpanel" aria-labelledby="tab-workspace">
+    <div id="access" class="notice" hidden>
+      <p><strong>Choose an app to adapt</strong></p>
+      <p class="ai-meta">Access is per site. It lets this extension read that app and change things only when you confirm here. No other sites, history, cookies or screen capture.</p>
+      <div id="grant-list" class="ai-row"></div>
+    </div>
+    <form id="connect" class="notice ai-form" hidden autocomplete="off">
+      <p><strong>Connect Vikunja</strong></p>
+      <p class="ai-meta">In Vikunja: avatar menu → Settings → API Tokens → Create. <strong>Don't use the Quick presets</strong>: "Read only" can't change tasks, and "Task management" also allows delete. Under <em>Projects</em> tick <em>Read All</em> and <em>Read One</em>; under <em>Tasks</em> tick <em>Read All</em>, <em>Read One</em>, <em>Create</em> and <em>Update</em>. Don't tick the bold group names (that selects everything, including Delete). It is kept only in this browser session's memory and sent only to your Vikunja server.</p>
+      <label for="token">API token</label>
+      <input id="token" type="password" required minlength="8" maxlength="512" spellcheck="false">
+      <div class="ai-row"><button class="primary" type="submit">Connect</button></div>
+    </form>
+    <div id="noapp" class="notice" hidden>
+      <p id="noapp-text">Open a granted app in a tab, then press Refresh.</p>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+    <div id="docchange" class="notice warn" hidden role="alert"></div>
+
+    <form id="intent-form" class="intent" hidden>
+      <label for="intent">What would help right now?</label>
+      <div class="ai-row">
+        <input id="intent" autocomplete="off" placeholder="e.g. Show the document and its open tasks together, compact, with keyboard shortcuts">
+        <button class="primary" type="submit">Propose</button>
+      </div>
+      <details id="voice" class="notice">
+        <summary>Dictate your request</summary>
+        <p id="voice-privacy">Optional English (US) dictation using your browser's on-device speech support. No cloud fallback. Roscelin does not record or save audio. Requires microphone permission and an available local language pack; this version does not install packs.</p>
+        <label><input type="checkbox" id="voice-consent"> I want to use my microphone for this dictation.</label>
+        <div class="ai-row"><button type="button" id="voice-start" aria-describedby="voice-privacy">Start dictation</button><button type="button" id="voice-stop" disabled>Stop listening</button><button type="button" id="voice-cancel">Cancel dictation</button></div>
+        <p id="voice-status" role="status" aria-live="polite">Microphone off. Dictation never submits or runs actions.</p>
+        <label for="voice-draft">Dictation draft (review and edit)</label><textarea id="voice-draft" maxlength="2000" rows="3"></textarea>
+        <button type="button" id="voice-insert" disabled>Append draft to request</button>
+      </details>
+      <div class="chips" aria-label="Examples">
+        <button type="button" data-intent="Compact list with keyboard shortcuts">Compact + keys</button>
+        <button type="button" data-intent="Guided, one task at a time, simple">Guided edit</button>
+        <button type="button" data-intent="Compare tasks side by side by status">Compare</button>
+        <button type="button" data-intent="Show the document and its open tasks together">Doc + tasks</button>
+      </div>
+    </form>
+
+    <details id="browser-steps" class="notice">
+      <summary>Browser inspection (experimental)</summary>
+      <p>Inspect and highlight an open Vikunja task in the original app. Browser writes are disabled because its cached page data could overwrite newer task fields. Use the existing API-backed task controls for edits.</p>
+      <p>This is an inspection prototype, not an autonomous browsing agent or OS cursor. Original-page write support remains unfinished.</p>
+      <button id="browser-inspect" type="button">1. Inspect current task</button>
+      <button title="Disabled until original-page freshness can be proven" id="browser-review" type="button" disabled>2. Review one click</button>
+      <button id="browser-cancel" type="button">Cancel steps</button>
+      <p id="browser-status" role="status" aria-live="polite">Nothing queued. Local Vikunja only.</p>
+    </details>
+
+    <details id="ai-settings" class="notice">
+      <summary>AI layouts (experimental)</summary>
+      <p>When on, “Propose” asks the local gateway on this computer for a layout. Only your request text, display preferences, this app's action names and field names, and item counts are sent. Never task titles or other app content. You always see the proposal first; nothing changes until you choose “Use this layout”, and every change still needs your approval.</p>
+      <label><input type="checkbox" id="ai-enabled"> Use AI layouts when I press Propose</label>
+      <form id="ai-pair" class="ai-row" autocomplete="off">
+        <label for="ai-secret" class="ai-meta">Pairing code from the gateway's screen (this browser session only)</label>
+        <input id="ai-secret" type="password" autocomplete="off" spellcheck="false" placeholder="6-digit code, e.g. 123 456">
+        <button type="submit">Pair</button>
+        <button type="button" id="ai-forget">Forget pairing</button>
+      </form>
+      <p id="ai-status" class="ai-meta" role="status" aria-live="polite"></p>
+      <p class="ai-meta">Gateway must allow this extension: <code id="ai-origin"></code></p>
+    </details>
+
+    <div id="proposal-busy" class="notice ai-row" hidden role="status" aria-live="polite">
+      <span id="proposal-busy-text">Designing a layout…</span>
+      <button id="proposal-cancel" type="button">Cancel</button>
+    </div>
+
+    <section id="proposal" class="notice" hidden aria-labelledby="proposal-title">
+      <h2 id="proposal-title"></h2>
+      <p id="proposal-why" class="ai-meta"></p>
+      <p id="proposal-source" class="badge"></p>
+      <p class="ai-meta" id="proposal-preview-label">Preview (not active until you choose “Use this layout”)</p>
+      <div id="proposal-preview" class="proposal-preview" inert aria-labelledby="proposal-preview-label"></div>
+      <form id="refine-form" class="refine" autocomplete="off">
+        <label for="refine">Refine this proposal</label>
+        <div class="ai-row"><input id="refine" placeholder="e.g. more compact, show priority first, hide status"><button type="submit">Refine</button></div>
+      </form>
+      <p id="proposal-changes" class="ai-meta" role="status" aria-atomic="true"></p>
+      <div id="proposal-history" class="ai-row" hidden>
+        <button id="proposal-back" type="button">Previous version</button>
+        <span id="proposal-version" class="ai-meta"></span>
+        <button id="proposal-forward" type="button">Next version</button>
+      </div>
+      <details><summary>Layout outline</summary><pre id="proposal-outline"></pre></details>
+      <details id="proposal-sent" hidden><summary>What was sent to the AI</summary><pre id="proposal-sent-body"></pre></details>
+      <div class="ai-row">
+        <button id="accept" class="primary" type="button">Use this layout</button>
+        <button id="discard" type="button">Keep current</button>
+      </div>
+    </section>
+
+    <div class="ai-row surface-bar" id="surface-bar" hidden>
+      <span><span id="surface-name" class="ai-meta"></span> <span id="surface-kind" class="badge"></span></span>
+      <button id="undo-layout" type="button" hidden>Undo layout</button>
+      <button id="save-layout" type="button">Save layout</button>
+    </div>
+    <details id="read-aloud-box" class="read-aloud-box">
+      <summary>Read aloud</summary>
+      <div class="ai-row"><button id="read-aloud" type="button" aria-describedby="read-privacy">Read workspace aloud</button><button id="read-stop" type="button">Stop reading</button></div>
+      <p id="read-privacy" class="ai-meta">Uses an available local English voice only. Starts only when you ask; audio follows your system output.</p>
+    </details>
+    <p id="read-status" role="status" aria-atomic="true"></p>
+    <details id="map-details"><summary>Workload map (optional experiment)</summary><section id="task-map" aria-label="Optional workload visualization"></section></details>
+    <div id="surface" tabindex="-1" role="region" aria-label="Adapted workspace"></div>
+  </section>
+
+  <section id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <form id="settings" class="ai-form">
+      <fieldset><legend>Density</legend>
+        <label><input type="radio" name="density" value="comfortable"> Comfortable</label>
+        <label><input type="radio" name="density" value="compact"> Compact</label>
+      </fieldset>
+      <label for="textScale">Text size <output id="textScaleOut"></output></label>
+      <input type="range" id="textScale" name="textScale" min="1" max="2" step="0.1">
+      <fieldset><legend>Contrast</legend>
+        <label><input type="radio" name="contrast" value="standard"> Standard</label>
+        <label><input type="radio" name="contrast" value="high"> High</label>
+      </fieldset>
+      <fieldset><legend>Words</legend>
+        <label><input type="radio" name="vocabulary" value="plain"> Plain</label>
+        <label><input type="radio" name="vocabulary" value="technical"> Technical</label>
+      </fieldset>
+      <label><input type="checkbox" name="reducedMotion"> Reduce motion</label>
+      <label><input type="checkbox" name="keyboardFirst"> Keyboard-first layouts</label>
+      <label><input type="checkbox" name="pauseApp"> Pause <span id="pause-app-name">this app</span> (no reads or actions)</label>
+      <p class="ai-row"><button id="disconnect" type="button" hidden>Disconnect Vikunja token</button></p>
+    </form>
+    <h2>Saved layouts</h2>
+    <ul id="saved" class="ai-list"></ul>
+    <h2>Your profile</h2>
+    <p class="ai-meta">Preferences and saved layouts only. Never app content or credentials. Stored on this device.</p>
+    <div class="ai-row">
+      <button id="export" type="button">Export profile</button>
+      <label class="filebtn">Import profile <input id="import" type="file" accept="application/json"></label>
+      <button id="reset" type="button">Reset preferences</button>
+      <button id="wipe" class="danger" type="button">Delete profile and saved layouts</button>
+    </div>
+  </section>
+
+  <section id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
+    <div class="ai-row"><button id="reconcile" type="button">Re-check unresolved</button></div>
+    <ol id="journal" class="journal"></ol>
+  </section>
+</main>
+
+<!-- Extension-owned review/approval. Websites cannot draw into or trigger this panel. -->
+<dialog id="review" aria-labelledby="review-title">
+  <h2 id="review-title"></h2>
+  <p id="review-target" class="ai-meta"></p>
+  <ul id="review-lines"></ul>
+  <p id="review-risk" class="badge"></p>
+  <div class="ai-row">
+    <button id="review-confirm" class="primary" type="button"></button>
+    <button id="review-cancel" type="button">Cancel</button>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<script type="module" src="sidepanel.js"></script>
+</body>
+</html>
