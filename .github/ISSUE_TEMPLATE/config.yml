@@ -1,3 +1,5 @@
 blank_issues_enabled: false
-# Security problems: see SECURITY.md. A "Report a security problem privately" contact link is added at publication,
-# when the public repository's address is known and private vulnerability reporting is switched on.
+contact_links:
+  - name: Report a security problem privately
+    url: https://github.com/sential-gateway/roscelin-open-source/security/advisories/new
+    about: Use private vulnerability reporting; do not put exploit details in public issues. See SECURITY.md for the email fallback.
