@@ -55,6 +55,18 @@ To test against a real app, see [docs/vikunja-local-testing.md](docs/vikunja-loc
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Commits need a DCO sign-off (`git commit -s`).
 
+### Pick a first contribution
+
+Start with the [good first issues](https://github.com/sential-gateway/roscelin-open-source/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22):
+
+- [Document working Refine examples](https://github.com/sential-gateway/roscelin-open-source/issues/1).
+- [Improve Chrome test setup instructions](https://github.com/sential-gateway/roscelin-open-source/issues/2).
+- [Extend workload-map preference tests](https://github.com/sential-gateway/roscelin-open-source/issues/4).
+
+For more involved work, browse [help wanted](https://github.com/sential-gateway/roscelin-open-source/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22help%20wanted%22). Each issue gives a scope, code pointers and acceptance criteria. Comment before starting to avoid duplicate work; no assignment is needed to propose a change.
+
+Use synthetic data, keep your pull request focused, and report what you actually tested. The starter tasks don't require a paid AI account. Browser tests need a local Chrome or Chromium installation. Open a pull request from your fork; don't push directly to `main`.
+
 Don't report security problems in public issues. See [SECURITY.md](SECURITY.md).
 
 ## Licence
