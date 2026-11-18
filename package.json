@@ -10,9 +10,9 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test tests/",
+    "test": "node scripts/test-offline.mjs",
     "fixture": "node scripts/serve-fixture.mjs",
-    "check": "node scripts/build.mjs && node --test tests/",
+    "check": "node scripts/build.mjs && npm test",
     "test:a11y": "node scripts/e2e-accessibility.mjs",
     "test:panel": "node scripts/build.mjs --e2e && node scripts/e2e.mjs",
     "test:live": "node scripts/vikunja/instance.mjs reset && node --test --test-concurrency=1 tests-live/",
