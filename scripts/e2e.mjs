@@ -212,6 +212,9 @@ try {
     await evaluate(P, `(() => { const s = document.querySelector('.ai-edit select[name="status"]'); s.value = 'done'; s.dispatchEvent(new Event('change', {bubbles:true})); document.querySelector('.ai-edit button[type="submit"]').click(); })()`);
     const lines = await waitFor(P, `document.getElementById('review').open && document.getElementById('review-lines').textContent`, 'review dialog');
     assert(lines.includes('"todo" → "done"'), lines);
+    // Screen readers announce the dialog's description with its name: which item, what changes, and the risk.
+    const described = await evaluate(P, `(() => { const ids = (document.getElementById('review').getAttribute('aria-describedby') ?? '').split(/\\s+/).filter(Boolean); return { ids, text: ids.map((id) => document.getElementById(id)?.textContent ?? '#missing').join(' ') }; })()`);
+    assert(described.ids.length === 3 && !described.text.includes('#missing') && described.text.includes('Finalize launch copy') && described.text.includes('"todo" → "done"') && /risk|approval/i.test(described.text), JSON.stringify(described));
     await shot(P, 'e2e-review-dialog.png');
     await evaluate(P, `document.getElementById('review-confirm').click()`);
     const toast = await waitFor(P, `(t => t.startsWith('✓') || t.startsWith('✗') || t.startsWith('?') ? t : '')(document.getElementById('toast').textContent)`, 'result toast');
