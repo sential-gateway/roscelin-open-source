@@ -127,6 +127,14 @@ async function inspectBrowserTask(){
 }
 const adapters: AdapterPort[] = [fixtureAdapter, vikunjaAdapter,browserAdapter];
 
+/** The granted app of the tab in front of the person, if any (no tabs permission: only granted origins are visible). */
+async function focusedApp(): Promise<AppDescriptor | null> {
+  const tabs = await appTabs();
+  const [focused] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  const t = tabs.find((x) => x.id === focused?.id) ?? tabs.find((x) => x.active) ?? null;
+  return t ? appOf(t.url) : null;
+}
+
 /** Read state for whatever granted app tab is current (active in the last-focused window, else most recent). */
 async function readCurrent(): Promise<{ tabId: number; state: ObservedState }> {
   const tabs = await appTabs();
@@ -238,9 +246,14 @@ chrome.runtime.onMessage.addListener((msg: any, sender: any, sendResponse: (r: u
       }
       case 'state.read': {
         await recheckUnresolved();
-        const { tabId, state } = await readCurrent();
-        const tab = await chrome.tabs.get(tabId);
-        return { ok: true, state, tabTitle: tab.title };
+        try {
+          const { tabId, state } = await readCurrent();
+          const tab = await chrome.tabs.get(tabId);
+          return { ok: true, state, tabTitle: tab.title };
+        } catch (e) {
+          // Say which granted app the person is looking at, so the panel offers only that app's setup.
+          return { ok: false, error: String((e as Error).message ?? e), appId: (await focusedApp())?.appId ?? null };
+        }
       }
       case 'app.connect': {
         // Token arrives from the workspace page only; validated against the app before storing; never echoed back.

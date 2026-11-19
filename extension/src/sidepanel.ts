@@ -267,11 +267,15 @@ function drawAccess() {
     }),
   );
   const vik = apps.find((a) => a.needsToken);
-  $('connect').hidden = !(vik && vik.granted && !vik.connected);
+  // The Vikunja connection form only on a Vikunja page: never above another app's workspace.
+  $('connect').hidden = !(vik && vik.granted && !vik.connected && currentTabApp === 'vikunja');
   $('disconnect').hidden = !(vik && vik.connected);
 }
 
 // ---------- state refresh (data updates never reorganize the accepted layout) ----------
+/** The supported app of the tab in front of the person (from the last read), so setup shows only for that app. */
+let currentTabApp: string | null = null;
+
 async function refresh() {
   // Re-read grants/connection each time so the panel never shows a stale "connect" or "grant" state.
   await loadRegistry().catch(() => {});
@@ -293,6 +297,8 @@ async function refresh() {
     return;
   }
   const r = await send({ type: 'state.read' }).catch((e: Error) => ({ ok: false, error: e.message }));
+  currentTabApp = r?.ok ? (r.state as ObservedState).appId : r?.appId ?? null;
+  drawAccess();
   if (!r?.ok) {
     $('noapp').hidden = false;
     $('noapp-text').textContent = r?.error && !/No open tab/.test(r.error) ? r.error : 'Open a granted app in a tab (for example a Vikunja project), then press Refresh.';
