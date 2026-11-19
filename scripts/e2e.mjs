@@ -155,6 +155,16 @@ try {
     return `getContexts(SIDE_PANEL) → sidepanel.html; tabs.getCurrent() → none; ${vis}`;
   });
 
+  await check('no Vikunja connection form on another app\'s page (Vikunja allowed, not connected)', async () => {
+    await waitFor(P, `document.querySelector('.ai-provenance')?.textContent.includes('localhost:4317')`, 'reference app state', 10000);
+    const reg = await send({ type: 'registry' });
+    const vik = reg.apps.find((a) => a.appId === 'vikunja');
+    assert(vik.granted && !vik.connected, `precondition: ${JSON.stringify({ granted: vik.granted, connected: vik.connected })}`);
+    const r = await evaluate(P, `({ hidden: document.getElementById('connect').hidden, text: document.body.innerText.includes('API token') })`);
+    assert(r.hidden && !r.text, JSON.stringify(r));
+    return 'Vikunja allowed and not connected; on the reference app no connection form is shown';
+  });
+
   await check('workspace loads real state from the app tab with provenance', async () => {
     const t = await waitFor(P, `document.querySelector('.ai-provenance')?.textContent`, 'provenance');
     assert(t.includes('Q3 launch plan') && t.includes('localhost:4317'), t);
