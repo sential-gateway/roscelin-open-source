@@ -16,7 +16,8 @@
     "test:a11y": "node scripts/e2e-accessibility.mjs",
     "test:panel": "node scripts/build.mjs --e2e && node scripts/e2e.mjs",
     "test:live": "node scripts/vikunja/instance.mjs reset && node --test --test-concurrency=1 tests-live/",
-    "test:free": "npm run check && npm run test:a11y && npm run test:panel"
+    "test:free": "npm run check && npm run test:a11y && npm run test:audit && npm run test:panel",
+    "test:audit": "node scripts/build.mjs --e2e && node scripts/e2e-a11y-audit.mjs"
   },
   "dependencies": {
     "three": "0.180.0"

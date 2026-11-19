@@ -58,6 +58,10 @@
 * { box-sizing: border-box; }
 /* `hidden` must always win over layout classes (.ai-form, .ai-row and .notice set display). */
 [hidden] { display: none !important; }
+/* WCAG 2.5.8: every disclosure toggle is at least 24 px tall. */
+details > summary { min-height: 24px; padding-block: 2px; }
+/* WCAG 2.4.11: keep focused controls clear of the sticky header (height set from script) and the toast. */
+html { scroll-padding-top: var(--sticky-head, 64px); scroll-padding-bottom: 72px; }
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font: 400 var(--step-0)/1.5 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -112,9 +116,10 @@ main { padding: 12px 14px 88px; }
 .ai-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 /* ---- the ask bar: the primary entry */
-.intent { display: grid; gap: 8px; margin: 4px 0 12px; }
+.intent { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 4px 0 12px; }
+.intent > * { min-width: 0; }
 .intent > label { font-size: var(--step-1); font-weight: 680; }
-.intent input { flex: 1; min-width: 0; min-height: 40px; border-radius: var(--radius); padding: 8px 12px; }
+.intent input { flex: 1 1 8em; width: 8em; min-width: 0; min-height: 40px; border-radius: var(--radius); padding: 8px 12px; }
 .intent button[type="submit"] { min-height: 40px; border-radius: var(--radius); padding: 6px 16px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chips button { font-size: var(--step--1); min-height: 30px; border-radius: 999px; border-color: transparent; background: var(--accent-tint); color: var(--accent); }
@@ -132,6 +137,7 @@ main { padding: 12px 14px 88px; }
 #proposal-changes:empty { display: none; }
 #proposal-changes { color: var(--fg); background: var(--accent-tint); border-radius: var(--radius-sm); padding: 6px 10px; }
 .surface-bar { justify-content: space-between; margin: 14px 0 6px; }
+.surface-heading { margin: 0; font-size: var(--step-0); font-weight: 650; color: var(--fg); }
 #surface-name { font-weight: 650; color: var(--fg); font-size: var(--step-0); }
 #surface-kind:empty { display: none; }
 .read-aloud-box { margin: 2px 0 8px; }

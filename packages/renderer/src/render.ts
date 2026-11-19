@@ -364,10 +364,12 @@ function renderNode(n: UINode, ctx: RenderCtx, path: string): HTMLElement | null
       return h('div', { class: 'ai-columns', style: `--cols:${groups.length || 1}` }, ...groups.map((g) => {
         const inG = items.filter((o) => String(o.fields[field]) === g);
         const ul = h('ul', { class: 'ai-list compact', role: 'listbox', 'aria-label': `${g} (${inG.length})` });
+        // One Tab stop per group (the selected item, else the first); arrow keys move within the group.
+        const stop = inG.some((o) => o.objectId === ctx.ui.selectedId) ? ctx.ui.selectedId : inG[0]?.objectId;
         inG.forEach((o) => {
-          const li = h('li', { role: 'option', tabindex: '0', 'aria-selected': String(ctx.ui.selectedId === o.objectId), 'data-key': `obj:${o.objectId}` }, String(o.fields.title ?? ''));
+          const li = h('li', { role: 'option', tabindex: o.objectId === stop ? '0' : '-1', 'aria-selected': String(ctx.ui.selectedId === o.objectId), 'data-key': `obj:${o.objectId}` }, String(o.fields.title ?? ''));
           li.addEventListener('click', () => ctx.on.select(o.objectId));
-          li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ctx.on.select(o.objectId); } if(e.key==='ArrowDown'){e.preventDefault();(li.nextElementSibling as HTMLElement)?.focus();} if(e.key==='ArrowUp'){e.preventDefault();(li.previousElementSibling as HTMLElement)?.focus();} });
+          li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ctx.on.select(o.objectId); } if(e.key==='ArrowDown'){e.preventDefault();(li.nextElementSibling as HTMLElement)?.focus();} if(e.key==='ArrowUp'){e.preventDefault();(li.previousElementSibling as HTMLElement)?.focus();} if(e.key==='Home'||e.key==='End'){e.preventDefault();((e.key==='Home'?ul.firstElementChild:ul.lastElementChild) as HTMLElement|null)?.focus();} });
           ul.append(li);
         });
         return h('section', { class: 'ai-card' }, h('header', {}, h('h3', {}, `${g} (${inG.length})`)), ul);

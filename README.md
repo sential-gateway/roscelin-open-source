@@ -27,6 +27,7 @@ You need Node.js 24 or later. The side-panel tests also need Chrome or Chromium 
 npm ci --ignore-scripts
 npm run check        # build, then run the offline tests
 npm run test:a11y    # accessibility checks in headless Chrome
+npm run test:audit   # accessibility pass over every layout in the real side panel
 npm run test:panel   # side-panel tests against the reference app
 ```
 

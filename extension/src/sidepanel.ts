@@ -86,7 +86,20 @@ function buildRequest(capabilityId: string, objectId: string | null, args: Recor
 }
 
 // ---------- review & execution (extension-owned) ----------
+/** Put keyboard focus back where the person was in the workspace, after it was redrawn (WCAG 2.4.3). */
+function restoreWorkspaceFocus(key: string | null) {
+  const active = document.activeElement;
+  if (active && active !== document.body && active.isConnected && !(active as HTMLButtonElement).disabled) return;
+  const container = $('surface');
+  const same = key ? container.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`) : null;
+  const target = same && !(same as HTMLButtonElement).disabled ? same : container.querySelector<HTMLElement>('[data-autofocus]') ?? container;
+  target.focus({ preventScroll: false });
+}
+
 async function review(req: ActionRequest) {
+  // The trigger is redrawn (and disabled while busy), so remember it by its stable key to return focus afterwards.
+  const opener = document.activeElement as HTMLElement | null;
+  const returnKey = opener && $('surface').contains(opener) ? opener.getAttribute('data-key') : null;
   busy = true;
   draw();
   try {
@@ -167,7 +180,14 @@ async function review(req: ActionRequest) {
   } finally {
     busy = false;
     await refresh();
+    restoreWorkspaceFocus(returnKey);
   }
+}
+
+// The sticky header's height changes with text size and wrapping; scroll padding follows it (see sidepanel.css).
+{
+  const head = document.querySelector<HTMLElement>('.shell-head');
+  if (head) new ResizeObserver(() => document.documentElement.style.setProperty('--sticky-head', `${Math.ceil(head.getBoundingClientRect().height) + 8}px`)).observe(head);
 }
 
 // ---------- rendering ----------
@@ -385,8 +405,14 @@ function showProposal() {
   $('proposal-outline').textContent = outline(proposal).join('\n');
   $('proposal-history').hidden = versions.length < 2;
   $('proposal-version').textContent = `Version ${versionIdx + 1} of ${versions.length}`;
-  ($('proposal-back') as HTMLButtonElement).disabled = versionIdx === 0;
-  ($('proposal-forward') as HTMLButtonElement).disabled = versionIdx === versions.length - 1;
+  const back = $('proposal-back') as HTMLButtonElement;
+  const forward = $('proposal-forward') as HTMLButtonElement;
+  const hadFocus = document.activeElement;
+  back.disabled = versionIdx === 0;
+  forward.disabled = versionIdx === versions.length - 1;
+  // A button that becomes disabled loses keyboard focus; keep focus in the version controls instead of dropping it.
+  if (hadFocus === back && back.disabled && !forward.disabled) forward.focus();
+  if (hadFocus === forward && forward.disabled && !back.disabled) back.focus();
   // Read-only preview: rendered with no-op handlers inside an inert container (no focus, no clicks, no writes).
   const noop = () => {};
   renderSurface($('proposal-preview'), proposal, {
