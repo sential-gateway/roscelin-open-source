@@ -55,6 +55,8 @@ To test against a real app, see [docs/vikunja-local-testing.md](docs/vikunja-loc
 
 Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Commits need a DCO sign-off (`git commit -s`).
 
+What has been checked for accessibility, known barriers, and how to report one: see [ACCESSIBILITY.md](ACCESSIBILITY.md).
+
 Don't report security problems in public issues. See [SECURITY.md](SECURITY.md).
 
 ## Licence
